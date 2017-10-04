@@ -8,7 +8,10 @@ import ROOT
 import array
 import time
 import numpy
+
 from math import exp, sqrt
+from runlists import getBeamEtaFromRun
+from runlists import getBeamPhiFromRun
 
 HCAL_DET_ngHB = 21
 HCAL_DET_ngHE = 22
@@ -150,6 +153,12 @@ start = options.start
 adc = options.adc
 emapFile = options.emap
 shunt = options.shunt
+
+#Get the Eta and Phi that the Beam is pointed at
+beamEta = int(getBeamEtaFromRun(int(runnum)))
+beamPhi = int(getBeamPhiFromRun(int(runnum)))
+
+print "Run:%i Beam Pointed at Eta:%i Phi:%i" % (runnum,beamEta,beamPhi)
 
 # Do some sanity checks
 if infile is None: 
@@ -821,7 +830,7 @@ for ievt in xrange(start, start + nevts_to_run):
         if fillEplots: hist["e_4TS_noPS", ichan].Fill(esum[ichan, "4TS_noPS"])
 
         # Fill Chris' noPS charge plots 
-        hist["adc_nosub_binChris", ichan].Fill(esum[ichan, "4TS_noPS"])
+        if fillEplots: hist["adc_nosub_binChris", ichan].Fill(esum[ichan, "4TS_noPS"])
 
         # Fill 4TS pedestal-corrected energy sum plot
         if fillEplots: hist["e_4TS_PS", ichan].Fill(esum[ichan, "4TS_PS"])
