@@ -18,7 +18,8 @@ HCAL_DET_ngHE = 22
 HCAL_DET_HBHE = 26
 HCAL_DET_HF   = 27
 
-edges10_list = [1.58,   4.73,   7.88,   11.0,   14.2,   17.3,   20.5,   23.6,
+edges10_list = [
+  1.58,   4.73,   7.88,   11.0,   14.2,   17.3,   20.5,   23.6,
   26.8,   29.9,   33.1,   36.2,   39.4,   42.5,   45.7,   48.8,
   53.6,   60.1,   66.6,   73.0,   79.5,   86.0,   92.5,   98.9,
   105,    112,    118,    125,    131,    138,    144,    151,
@@ -49,9 +50,11 @@ edges10_list = [1.58,   4.73,   7.88,   11.0,   14.2,   17.3,   20.5,   23.6,
   121000, 125000, 128000, 131000, 137000, 145000, 152000, 160000,
   168000, 176000, 183000, 191000, 199000, 206000, 214000, 222000,
   230000, 237000, 245000, 253000, 261000, 268000, 276000, 284000,
-  291000, 302000, 316000, 329000, 343000, 356000, 370000, 384000, 398000]
+  291000, 302000, 316000, 329000, 343000, 356000, 370000, 384000, 398000,
+  410000, 430000, 450000, 470000, 520000, 550000, 580000, 640000, 680000
+]
 
-edgesChris_list = [
+edgesChris_list = [0,
   3.1,    6.2,    9.3,    12.4,   15.5,   18.6,   21.7,   24.8,
   27.9,   31,     34.1,   37.2,   40.3,   43.4,   46.5,   49.6,
   52.7,   55.8,   58.9,   62,     65.1,   68.2,   71.3,   74.4,   
@@ -94,7 +97,8 @@ edgesChris_list = [
   168000, 176000, 183000, 191000, 199000, 206000, 214000, 222000,
   230000, 237000, 245000, 253000, 261000, 268000, 276000, 284000,
   291000, 302000, 316000, 329000, 343000, 356000, 370000, 384000, 398000,
-  410000, 430000, 450000, 470000, 520000, 550000, 580000, 640000, 680000]
+  410000, 430000, 450000, 470000, 520000, 550000, 580000, 640000, 680000
+]
 
 #######################
 # Get options
@@ -431,7 +435,7 @@ hist["trigPhase"] = ROOT.TH1F("trigPhase", "trigPhase", 500, trigPhase-50., trig
 # Particle ID stuff (PID)
 hist["pid"]        = ROOT.TH1F("pid", "pid",       3,  0.5, 3.5) # 1 = muon, 2 = pion, 3 = electron
 hist["nPass"]      = ROOT.TH1F("nPass", "nPass",   7, -0.5, 6.5)
-hist["frac19_5_2"] = ROOT.TH1F("frac19_5_2", "frac19_5_2", 100, 0.0, 1.0) 
+hist["fracBeam_dep2"] = ROOT.TH1F("fracBeam_dep2", "fracBeam_dep2", 100, 0.0, 1.0) 
 
 
 
@@ -446,9 +450,9 @@ for ichan in chanlist:
         hist["charge", ichan, its] = ROOT.TH1F("Charge_"+label+"_ts"+str(its),
                                                "Charge_"+label+"_ts"+str(its), 8000, 0., 8000.)
 
-    hist["e_4TS_noPS", ichan]         = ROOT.TH1F("Energy_noPS_%s"%label, "Energy_noPS_%s"%label, 247, edges10)
-    hist["adc_nosub_binChris", ichan] = ROOT.TH1F("adc_nosub_binChris_" +label, "adc_nosub_binChris_" +label, 333, edgesChris)
-    hist["e_4TS_PS"     , ichan]      = ROOT.TH1F("Energy_"             +label, "Energy_"             +label, 247, edges10)
+    hist["e_4TS_noPS", ichan]         = ROOT.TH1F("Energy_noPS_%s"%label, "Energy_noPS_%s"%label, 256, edges10)
+    hist["adc_nosub_binChris", ichan] = ROOT.TH1F("adc_nosub_binChris_" +label, "adc_nosub_binChris_" +label, 334, edgesChris)
+    hist["e_4TS_PS"     , ichan]      = ROOT.TH1F("Energy_"             +label, "Energy_"             +label, 256, edges10)
     hist["TDC_v_charge" , ichan]      = ROOT.TH2F("TDC_v_charge_"       +label, "TDC_v_charge_"       +label, 8000, 0., 8000., 1001, -0.5, 1000.5)
     hist["time_v_charge", ichan]      = ROOT.TH2F("time_v_charge_"      +label, "time_v_charge_"      +label, 8000, 0., 8000.,   76, -0.5,   75.5) # 0 = start of TS3, 75 is end of TS5
     hist["time_v_etime" , ichan]      = ROOT.TH2F("time_v_etime_"       +label, "time_v_etime_"       +label, 251, -75.5,  175.5,   251, -75.5,  175.5)
@@ -735,15 +739,16 @@ for ievt in xrange(start, start + nevts_to_run):
 
     # PID variables
     ################
-    e19_5 = {} # dictionary for holding energies of depths in tower ieta19, iphi5
+    eBeam = {} # dictionary for holding energies of depths for tower the beam is pointed at
     for idep in range(2,7):
-        e19_5[idep] = 0.
+        eBeam[idep] = 0.
 
     showerE = 0.  # shower energy
     showerChans = []  # channels in which to sum shower energy
-    for ieta in range(18,21):
-        for idep in range(2,7):
-            showerChans.append((ieta, 5, idep))
+    for ieta in range(beamEta-1,beamEta+2):
+        for iphi in range(beamPhi-1,beamPhi+2):            
+            for idep in range(2,7):
+            showerChans.append((ieta, iphi, idep))
             
         
     for ichan,rchan in fchan.iteritems():
@@ -804,8 +809,8 @@ for ievt in xrange(start, start + nevts_to_run):
             #print "(ieta,iphi,depth,energy) =",ieta,iphi,depth,esum[ichan, "4TS_PS"]    #JRD
             showerE += esum[ichan, "4TS_PS"]
             
-        if ieta == 19 and iphi == 5 and depth in range(2,7):
-            e19_5[depth] = esum[ichan, "4TS_PS"]
+        if ieta == beamEta and iphi == beamPhi and depth in range(2,7):
+            eBeam[depth] = esum[ichan, "4TS_PS"]
 
         # Fill histograms
         ####################
@@ -904,25 +909,25 @@ for ievt in xrange(start, start + nevts_to_run):
     nPass = 0
     for idep in range(2,7):
         if shunt == 6:
-            if e19_5[idep] > 20. and e19_5[idep] < 600.: nPass += 1
+            if eBeam[idep] > 20. and eBeam[idep] < 600.: nPass += 1
         elif shunt == 1:
-            if e19_5[idep] > 120. and e19_5[idep] < 3600.: nPass += 1
+            if eBeam[idep] > 120. and eBeam[idep] < 3600.: nPass += 1
 
     if nPass >= 4: isMuon = True
 
     #electron
-    e19_5_2_frac = 0.
+    eBeam_dep2_frac = 0.
     if showerE > 0.:
-	 e19_5_2_frac = e19_5[2]/showerE
+	 eBeam_dep2_frac = eBeam[2]/showerE
 
-    if not isMuon and e19_5_2_frac > 0.9: isElectron = True
+    if not isMuon and eBeam_dep2_frac > 0.9: isElectron = True
 
     if isMuon       : hist["pid"].Fill(1)
     elif isElectron : hist["pid"].Fill(2)
     else            : hist["pid"].Fill(3)
 
     hist["nPass"].Fill(nPass)
-    hist["frac19_5_2"].Fill(e19_5_2_frac)
+    hist["fracBeam_dep2"].Fill(eBeam_dep2_frac)
 
 ###Sort the histograms
 SortedHist = outtfile.mkdir("SortedHist")
