@@ -15,7 +15,6 @@ HCAL_DET_ngHE = 22
 HCAL_DET_HBHE = 26
 HCAL_DET_HF   = 27
 
-
 edges10_list = [1.58,   4.73,   7.88,   11.0,   14.2,   17.3,   20.5,   23.6,
   26.8,   29.9,   33.1,   36.2,   39.4,   42.5,   45.7,   48.8,
   53.6,   60.1,   66.6,   73.0,   79.5,   86.0,   92.5,   98.9,
@@ -49,7 +48,7 @@ edges10_list = [1.58,   4.73,   7.88,   11.0,   14.2,   17.3,   20.5,   23.6,
   230000, 237000, 245000, 253000, 261000, 268000, 276000, 284000,
   291000, 302000, 316000, 329000, 343000, 356000, 370000, 384000, 398000]
 
-edgesChris = [
+edgesChris_list = [
   3.1,    6.2,    9.3,    12.4,   15.5,   18.6,   21.7,   24.8,
   27.9,   31,     34.1,   37.2,   40.3,   43.4,   46.5,   49.6,
   52.7,   55.8,   58.9,   62,     65.1,   68.2,   71.3,   74.4,   
@@ -181,8 +180,11 @@ from tb_utils import *
 # Scale bin edges according to shunt value
 edges10_np = numpy.array(edges10_list)
 edges10_np = edges10_np/shunt
+edgesChris_np = numpy.array(edgesChris_list)
+edgesChris_np = edgesChris_np/shunt
 
 edges10 = array.array('d', edges10_np)
+edgesChris = array.array('d', edgesChris_np)
 
 #######################
 #  Set ROOT options  
@@ -435,16 +437,16 @@ for ichan in chanlist:
         hist["charge", ichan, its] = ROOT.TH1F("Charge_"+label+"_ts"+str(its),
                                                "Charge_"+label+"_ts"+str(its), 8000, 0., 8000.)
 
-    hist["e_4TS_noPS", ichan] = ROOT.TH1F("Energy_noPS_%s"%label, "Energy_noPS_%s"%label, 247, edges10)
+    hist["e_4TS_noPS", ichan]         = ROOT.TH1F("Energy_noPS_%s"%label, "Energy_noPS_%s"%label, 247, edges10)
+    hist["adc_nosub_binChris", ichan] = ROOT.TH1F("adc_nosub_binChris_" +label, "adc_nosub_binChris_" +label, 333, edgesChris)
+    hist["e_4TS_PS"     , ichan]      = ROOT.TH1F("Energy_"             +label, "Energy_"             +label, 247, edges10)
+    hist["TDC_v_charge" , ichan]      = ROOT.TH2F("TDC_v_charge_"       +label, "TDC_v_charge_"       +label, 8000, 0., 8000., 1001, -0.5, 1000.5)
+    hist["time_v_charge", ichan]      = ROOT.TH2F("time_v_charge_"      +label, "time_v_charge_"      +label, 8000, 0., 8000.,   76, -0.5,   75.5) # 0 = start of TS3, 75 is end of TS5
+    hist["time_v_etime" , ichan]      = ROOT.TH2F("time_v_etime_"       +label, "time_v_etime_"       +label, 251, -75.5,  175.5,   251, -75.5,  175.5)
+    hist["time", ichan]               = ROOT.TH1F("time_"               +label, "time_"               +label, 76  , -0.5,   75.5) # 0 = start of TS3, 75 is end of TS5
+    hist["TDC" , ichan]               = ROOT.TH1F("TDC_"                +label, "TDC_"                +label, 1001, -0.5, 1000.5) # 0 = start of TS3, 75 is end of TS5
     #print "Nbins: %i, lowedge: "%(hist["e_4TS_noPS", ichan].GetNbinsX())
     #print [hist["e_4TS_noPS", ichan].GetXaxis().GetBinLowEdge(i) for i in xrange(1,247)]
-    hist["e_4TS_PS"     , ichan] = ROOT.TH1F("Energy_"       +label, "Energy_"       +label, 247, edges10)
-    hist["TDC_v_charge" , ichan] = ROOT.TH2F("TDC_v_charge_" +label, "TDC_v_charge_" +label, 8000, 0., 8000., 1001, -0.5, 1000.5)
-    hist["time_v_charge", ichan] = ROOT.TH2F("time_v_charge_"+label, "time_v_charge_"+label, 8000, 0., 8000.,   76, -0.5,   75.5) # 0 = start of TS3, 75 is end of TS5
-    hist["time_v_etime" , ichan] = ROOT.TH2F("time_v_etime_" +label, "time_v_etime_" +label, 251, -75.5,  175.5,   251, -75.5,  175.5)
-    hist["time", ichan]          = ROOT.TH1F("time_"         +label, "time_"         +label, 76  , -0.5,   75.5) # 0 = start of TS3, 75 is end of TS5
-    hist["TDC" , ichan]          = ROOT.TH1F("TDC_"          +label, "TDC_"          +label, 1001, -0.5, 1000.5) # 0 = start of TS3, 75 is end of TS5
-
 
 
 
@@ -818,6 +820,9 @@ for ievt in xrange(start, start + nevts_to_run):
         # Fill 4TS energy sum plot
         if fillEplots: hist["e_4TS_noPS", ichan].Fill(esum[ichan, "4TS_noPS"])
 
+        # Fill Chris' noPS charge plots 
+        hist["adc_nosub_binChris", ichan].Fill(esum[ichan, "4TS_noPS"])
+
         # Fill 4TS pedestal-corrected energy sum plot
         if fillEplots: hist["e_4TS_PS", ichan].Fill(esum[ichan, "4TS_PS"])
         
@@ -917,6 +922,7 @@ Charge_hist = SortedHist.mkdir("Charge_hist")
 Link_Error_hist = SortedHist.mkdir("Link_Error_hist")
 AvgPulse_hist = SortedHist.mkdir("AvgPulse_hist")
 Energy_hist = SortedHist.mkdir("Energy_hist")
+Chris_noPS_hist = SortedHist.mkdir("Chris_noPS_hist")
 other_hist = SortedHist.mkdir("Other_hist")
 #h_x_hist = SortedHist.mkdir("h_x_hist")
 #h_y_hist = SortedHist.mkdir("h_y_hist")
@@ -943,6 +949,9 @@ for key,val in hist.items():
     elif key[0].find("e") >= 0:
         Energy_hist.cd()
         val.Write()
+    elif key[0].find("binChris") >= 0:
+        Chris_noPS_hist.cd()
+        val.Write()
     else:
         other_hist.cd()
         val.Write()
@@ -961,8 +970,6 @@ for key,val in hist.items():
 
 outtfile.cd()
 
-
-        
 
 #
 #print "Fraction of events with N hits in each WC view"
