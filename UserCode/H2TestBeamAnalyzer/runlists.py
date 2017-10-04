@@ -11,6 +11,7 @@
 EMAP_default = "EMAP-QIE11-L00-21AUG2015-04.txt"
 EMAP_specialODU = "EMAP-QIE11-SPECIAL-ODU-22AUG2015-02.txt"
 EMAP_2017 = "EMAP_AC05_01AUG2017_NOMINAL.txt"
+HB_EMAP_2017 = "EMAP_AC07_01SEP2017_Phase1_HB.txt"
 # runtable format:
 # runTable[runnumber] = [eta, phi, nev, beamcounters, beamtype, QIE shunt, emap]
 
@@ -679,7 +680,10 @@ HEruntable2017[3455] = (10650,23400,30000,"124","30e","6",EMAP_2017)
 ######################################
 #HB  Testbeam 2017
 ###################################### 
+
 HBruntable2017 = {}
+
+# runTable[runnumber] = [eta, phi, nev, beamcounters, beamtype, QIE shunt, emap, ieta, iphi]
 
 HBruntable2017[3526] = (8727,23401,2000,"","m","1",HB_EMAP_2017,13,5)
 HBruntable2017[3527] = (8727,23401,200,"","m","1",HB_EMAP_2017,13,5)
@@ -764,3 +768,14 @@ def getShuntFromRun(run):
 	    shunt = shunt_conversion[shunt_string]
         return shunt
 
+def getBeamEtaFromRun(run):
+	beamEta = -1.
+        if run in runTable_all:
+            beamEta = runTable_all[run][7]
+        return beamEta
+
+def getBeamPhiFromRun(run):
+	beamPhi = -1.
+        if run in runTable_all:
+            beamPhi = runTable_all[run][8]
+        return beamPhi
