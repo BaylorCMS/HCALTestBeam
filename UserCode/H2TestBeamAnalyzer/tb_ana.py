@@ -445,13 +445,14 @@ for ichan in chanlist:
     iphi = chanmap[ichan][1]
     depth = chanmap[ichan][2]
     label = "ieta" + str(ieta) + "_iphi" + str(iphi) + "_depth" + str(depth)
+    label2 = str(ieta) + "_" + str(iphi) + "_" + str(depth)
     hist["avgpulse", ichan] = ROOT.TProfile("AvgPulse_"+label, "AvgPulse_"+label, 10, -0.5, 9.5)
     for its in range(10):
         hist["charge", ichan, its] = ROOT.TH1F("Charge_"+label+"_ts"+str(its),
                                                "Charge_"+label+"_ts"+str(its), 8000, 0., 8000.)
 
     hist["e_4TS_noPS", ichan]         = ROOT.TH1F("Energy_noPS_%s"%label, "Energy_noPS_%s"%label, 256, edges10)
-    hist["adc_nosub_binChris", ichan] = ROOT.TH1F("adc_nosub_binChris_" +label, "adc_nosub_binChris_" +label, 334, edgesChris)
+    hist["adc_nosub_binChris",int(float(ieta)),int(float(iphi)),int(float(depth))] = ROOT.TH1F("adc_nosub_binChris_" +label2, "adc_nosub_binChris_" +label2, 334, edgesChris)
     hist["e_4TS_PS"     , ichan]      = ROOT.TH1F("Energy_"             +label, "Energy_"             +label, 256, edges10)
     hist["TDC_v_charge" , ichan]      = ROOT.TH2F("TDC_v_charge_"       +label, "TDC_v_charge_"       +label, 8000, 0., 8000., 1001, -0.5, 1000.5)
     hist["time_v_charge", ichan]      = ROOT.TH2F("time_v_charge_"      +label, "time_v_charge_"      +label, 8000, 0., 8000.,   76, -0.5,   75.5) # 0 = start of TS3, 75 is end of TS5
@@ -748,9 +749,8 @@ for ievt in xrange(start, start + nevts_to_run):
     for ieta in range(beamEta-1,beamEta+2):
         for iphi in range(beamPhi-1,beamPhi+2):            
             for idep in range(2,7):
-            showerChans.append((ieta, iphi, idep))
-            
-        
+                showerChans.append((ieta, iphi, idep))
+
     for ichan,rchan in fchan.iteritems():
         ieta, iphi, depth = chanmap[ichan]
         detType = fread[(ieta,iphi,depth)].detType[rchan]
@@ -803,6 +803,8 @@ for ievt in xrange(start, start + nevts_to_run):
                 sig_esum_ps += energy[ichan,its] - esum[ichan, "PED"]  #pedestal-subtracted energy  
         esum[ichan, "4TS_noPS"] = sig_esum
         esum[ichan, "4TS_PS"] = sig_esum_ps          
+        esum[int(float(ieta)),int(float(iphi)),int(float(depth)),"noPS"] = sig_esum
+        esum[int(float(ieta)),int(float(iphi)),int(float(depth)),"PS"] = sig_esum_ps
         
         # fill pid vars
         if (ieta,iphi,depth) in showerChans:
@@ -833,9 +835,6 @@ for ievt in xrange(start, start + nevts_to_run):
 
         # Fill 4TS energy sum plot
         if fillEplots: hist["e_4TS_noPS", ichan].Fill(esum[ichan, "4TS_noPS"])
-
-        # Fill Chris' noPS charge plots 
-        if fillEplots: hist["adc_nosub_binChris", ichan].Fill(esum[ichan, "4TS_noPS"])
 
         # Fill 4TS pedestal-corrected energy sum plot
         if fillEplots: hist["e_4TS_PS", ichan].Fill(esum[ichan, "4TS_PS"])
@@ -899,6 +898,32 @@ for ievt in xrange(start, start + nevts_to_run):
                 hist["e_wcC_noTScut"  , ichan].Fill(x,y)
                 hist["e_wcC_x_noTScut", ichan].Fill(x)
                 hist["e_wcC_y_noTScut", ichan].Fill(y)
+
+    # Fill Chris' noPS charge plots 
+    ###############################
+    if fillEplots:         
+        for eta in range(1,26):
+            for phi in range(3,7):
+                for idepth in range(1,8):
+                    #Cut for isolated muon
+                    e_neighbor = 0.
+                    if (eta,phi,idepth,'noPS') in esum:
+                        for e in range(eta-1,eta+2):
+                            for p in range(phi-1,phi+2):
+                                if (e,p,idepth,'noPS') in esum:
+                                    e_neighbor += esum[e,p,idepth,"noPS"]
+                        e_neighbor -= esum[eta,phi,idepth,"noPS"]
+                        if e_neighbor < 6*41:            
+                        #Cut for muon in whole tower
+                            #print e_neighbor
+                            #print esum[eta,phi,idepth, "noPS"]
+                            if idepth == 2 and (esum[eta,phi,3,"noPS"] > 2*41):                    
+                                if (eta,phi,2,'noPS') in esum:
+                                    #print esum[eta,phi,idepth, "noPS"]
+                                    hist["adc_nosub_binChris",eta,phi,idepth].Fill(esum[eta,phi,idepth, "noPS"])
+                            if idepth == 3 and (esum[eta,phi,2,"noPS"] > 2*41):                    
+                                if (eta,phi,3,'noPS') in esum:
+                                    hist["adc_nosub_binChris",eta,phi,idepth].Fill(esum[eta,phi,idepth, "noPS"])
     
     # Do PID
     ##############
