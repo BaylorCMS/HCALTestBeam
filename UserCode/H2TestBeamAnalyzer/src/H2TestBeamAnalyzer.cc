@@ -386,6 +386,7 @@ void H2TestBeamAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
     int mark_bad = 0;
     int mark_adc = 0;
     int mark_tdc = 0;
+    int coutStuff = 0;
 
     //
     //  Extracting All the Collections containing useful Info
@@ -803,9 +804,9 @@ void H2TestBeamAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
                mark_adc = adc;
                mark_tdc = tdc;
 
-            if (_verbosity>0)
-                std::cout << "Mark TS " << EventNumber << ":" << i << " bad, code=" << mark_bad << ", adc=" << mark_adc << ", tdc=" << mark_tdc << std::endl;
-
+            if (_verbosity>0 && coutStuff == 1)
+	        std::cout << "Mark TS " << EventNumber << ":" << i << " bad, code=" << mark_bad << ", adc=" << mark_adc << ", tdc=" << mark_tdc << std::endl;
+	    
             }
 
             // compute ped from TS 1&2
@@ -914,7 +915,7 @@ void H2TestBeamAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
                 mark_adc = adc;
                 mark_tdc = tdc;
                 
-                if (_verbosity==0)
+                if (_verbosity==0 && coutStuff == 1)
                     std::cout << "Mark TS1 " << EventNumber << ":" << i << " bad, code=" << mark_bad << ", adc=" << mark_adc << ", tdc=" << mark_tdc << std::endl;
                 
             }
@@ -924,7 +925,7 @@ void H2TestBeamAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
                 mark_adc = adc;
                 mark_tdc = tdc;
                 
-                if (_verbosity==0)
+                if (_verbosity==0 && coutStuff == 1)
                     std::cout << "Mark TS2 " << EventNumber << ":" << i << " bad, code=" << mark_bad << ", adc=" << mark_adc << ", tdc=" << mark_tdc << std::endl;
              
             }
@@ -1051,8 +1052,10 @@ void H2TestBeamAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup
       _treeWC->Fill();
       _treeBC->Fill();
       _treeTiming->Fill();
-    } else {
-      std::cout << "Mark event " << EventNumber << " bad, code=" << mark_bad << ", adc=" << mark_adc << std::endl;
+    } 
+    else {
+      if (coutStuff == 1)
+	std::cout << "Mark event " << EventNumber << " bad, code=" << mark_bad << ", adc=" << mark_adc << std::endl;
     }
 
     return;
